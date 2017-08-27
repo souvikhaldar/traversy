@@ -2,6 +2,7 @@ from flask import Flask,render_template,flash,redirect,url_for,session,logging,r
 from flask_mysqldb import MySQL
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 from passlib.hash import sha256_crypt
+from functools import wraps
 app = Flask(__name__)
 
 app.config['MYSQL_HOST']='localhost'
@@ -59,13 +60,44 @@ def login():
             password=data['password']
             #compare the passwords
             if sha256_crypt.verify(password_candidate,password):
-                app.logger.info('Password matched')
+                session['logged_in']=True
+                session['username']=username
+                flash('You are now logged in','success')
+                return redirect(url_for('dashboard'))
             else:
-                app.logger.info('Password not matched')
+                error='Password wrong'
+                return render_template('login.html',error=error)
+            #close connection
+            cur.close()
         else:
-            app.logger.info('No user')
-
+            error='Username not found'
+            return render_template('login.html',error=error)
+            
     return render_template('login.html')
+#check if logged in
+def is_logged_in(f):
+    @wraps(f)
+    def wrap(*args,**kwargs):
+        if 'logged_in' in session:
+            return f(*args,**kwargs)
+        else:
+            flash('Unauthorized, please log in','danger')
+            return redirect(url_for('login'))
+    return wrap
+
+
+
+#log out
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You are now logged out",'success')
+    return redirect(url_for('login'))
+#dashboard
+@app.route('/dashboard')
+@is_logged_in
+def dashboard():
+    return render_template('dashboard.html')
 if __name__=='__main__':
     app.secret_key='12345'
     app.run(debug=True)
