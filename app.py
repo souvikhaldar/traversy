@@ -164,8 +164,48 @@ def add_article():
         flash('Article created','success')
         return redirect(url_for('dashboard'))
     return render_template('add_article.html',form=form)
-        
+#edit article        
+@app.route('/edit_article/<string:id>',methods=['GET','POST'])
+@is_logged_in
+def edit_article(id):
+    cur=mysql.connection.cursor()
+    #get article by id
+    result=cur.execute("select * from articles where id=%s",[id])
+    article=cur.fetchone()
+    #get form
+    form=ArticleForm(request.form)
+    #populate article form fields
+    form.title.data=article['title']
+    form.body.data=article['body']
 
+    
+    if request.method=='POST' and form.validate():
+        title=request.form['title']
+        body=request.form['body']
+
+        #create cursor
+        cur=mysql.connection.cursor()
+        cur.execute("update articles set title=%s,body=%s where id=%s",(title,body,id))
+        #commit
+        mysql.connection.commit()
+        #close connection
+        cur.close()
+        flash('Article updated','success')
+        return redirect(url_for('dashboard'))
+    return render_template('edit_article.html',form=form)
+
+#delete article
+@app.route('/delete_article/<string:id>',methods=['POST'])
+@is_logged_in
+def delete_article(id):
+           cur=mysql.connection.cursor()
+           cur.execute("delete from articles where id=%s",[id])
+           mysql.connection.commit()
+           cur.close()
+           
+           flash('Article deleted','success')
+           return redirect(url_for('dashboard'))
+           
 if __name__=='__main__':
     app.secret_key='12345'
     app.run(debug=True)
