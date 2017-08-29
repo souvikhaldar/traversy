@@ -15,6 +15,10 @@
       All these information put together can even help you plan your budget well. Recognise the mistake in the pattern you spend and consecutively you’ll be able to rectify it and adopt a better budget plan.
        Hence, it will act as the saviour for the commoners by helping save their hard earned money!
     </p>
+    {% if session.logged_in==NULL %}
+    	<a href="/register" class="btn btn-primary btn-lg">Register</a>
+    	<a href="/login" class="btn btn-success btn-lg">Login</a>
+    {% endif %}
 
   </div>
 {% endblock %}
